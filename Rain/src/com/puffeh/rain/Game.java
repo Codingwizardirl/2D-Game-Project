@@ -16,7 +16,7 @@ import com.puffeh.rain.graphics.Screen;
 import com.puffeh.rain.input.Keyboard;
 import com.puffeh.rain.input.Mouse;
 import com.puffeh.rain.level.Level;
-import com.puffeh.rain.level.RandomLevel;
+import com.puffeh.rain.level.Maps;
 import com.puffeh.rain.level.SpawnLevel;
 import com.puffeh.rain.level.TileCoordinate;
 
@@ -27,20 +27,20 @@ public class Game extends Canvas implements Runnable {
 	private static int height = width / 16 * 9;
 	private static int scale = 3;
 	public static String title = "Wizards";
-
+     
+	private static Game game;
 	private Thread thread;
 	private JFrame frame;
 	private Keyboard key;
-	private Level level;
+	public  Level level;
 	private Player player;
 	private boolean running = false;
+	
 
 	private Screen screen;
 
-	private BufferedImage image = new BufferedImage(width, height,
-			BufferedImage.TYPE_INT_RGB);
-	private int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer())
-			.getData();
+	private BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+	private int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
 
 	public Game() {
 		Dimension size = new Dimension(width * scale, height * scale);
@@ -48,16 +48,24 @@ public class Game extends Canvas implements Runnable {
 		screen = new Screen(width, height);
 		frame = new JFrame();
 		key = new Keyboard();
-		level = Level.spawn;
+		level=new SpawnLevel(Maps.spawn_level);
+        setLevel(level);
+       
+        
 		TileCoordinate playerSpawn = new TileCoordinate(19, 67);
+
 		player = new Player(playerSpawn.x(), playerSpawn.y(), key);
-		player.init(level);
+		level.add(player);
 
 		addKeyListener(key);
 
 		Mouse mouse = new Mouse();
 		addMouseListener(mouse);
 		addMouseMotionListener(mouse);
+	}
+
+	public void setLevel(Level level) {
+		this.level = level;
 	}
 
 	public static int getWindowWidth() {
@@ -107,8 +115,7 @@ public class Game extends Canvas implements Runnable {
 			if (System.currentTimeMillis() - timer > 1000) {
 				timer += 1000;
 				System.out.println(updates + " ups, " + frames + " fps");
-				frame.setTitle(title + "   |      " + updates + " ups, "
-						+ frames + " fps");
+				frame.setTitle(title + "   |      " + updates + " ups, " + frames + " fps");
 				frames = 0;
 				updates = 0;
 			}
@@ -118,7 +125,7 @@ public class Game extends Canvas implements Runnable {
 
 	public void update() {
 		key.update();
-		player.update();
+		level.update();
 
 	}
 
@@ -130,10 +137,9 @@ public class Game extends Canvas implements Runnable {
 		}
 
 		screen.clear();
-		int xScroll = player.x - screen.width / 2;
-		int yScroll = player.y - screen.height / 2;
-		level.render(xScroll, yScroll, screen);
-		player.render(screen);
+		double xScroll = player.getX() - screen.width / 2;
+		double yScroll = player.getY() - screen.height / 2;
+		level.render((int) xScroll, (int) yScroll, screen);
 
 		for (int i = 0; i < pixels.length; i++) {
 			pixels[i] = screen.pixels[i];
@@ -154,7 +160,7 @@ public class Game extends Canvas implements Runnable {
 	}
 
 	public static void main(String[] args) {
-		Game game = new Game();
+		game = new Game();
 		game.frame.setResizable(false);
 		game.frame.setTitle(Game.title);
 		game.frame.add(game);
@@ -164,5 +170,14 @@ public class Game extends Canvas implements Runnable {
 		game.frame.setVisible(true);
 
 		game.start();
+	}
+
+	public static Game getGame() {
+		return game;
+	}
+
+	public  Level getLevel() {
+		return level;
+
 	}
 }
